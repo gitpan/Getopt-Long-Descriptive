@@ -12,11 +12,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
- 0.01
+ 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -151,7 +151,7 @@ sub describe_options {
       spec       => $_->[0],
       desc       => $_->[1],
       constraint => $_->[2] || {},
-      name       => _munge((split /\|/, $_->[0])[0]),
+      name       => _munge((split /[=|]/, $_->[0])[0]),
     )}
   } @_;
   

@@ -1,5 +1,11 @@
 Revision history for Getopt-Long-Descriptive
 
-0.01    Date/time
+0.02    20051110 14:32:53
+
+        Bugfix: Getopt::Long type specifiers were sneaking
+        into option names
+
+0.01    20051110 12:46:52
+
         First version, released on an unsuspecting world.
 

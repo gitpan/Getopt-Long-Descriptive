@@ -14,4 +14,29 @@ use_ok("Getopt::Long::Descriptive");
 # precludes => [...]
 # sugar for only_one_of and all_or_none
 
-# I thougt I had tests here, but I can't find them.
+sub is_opt {
+  my ($argv, $specs, $expect, $desc) = @_;
+  local @ARGV = @$argv;
+  eval { 
+    my ($opt, $usage) = describe_options(
+      "test %o",
+      @$specs,
+    );
+    is_deeply(
+      $opt,
+      $expect,
+      $desc,
+    );
+  }; 
+  if ($@) {
+    chomp($@);
+    is($@, "", "$desc: $@");
+  }
+}
+
+is_opt(
+  [ ],
+  [ [ "foo-bar=i", "foo integer", { default => 17 } ] ],
+  { foo_bar => 17 },
+  "default foo_bar with no short option name",
+);
