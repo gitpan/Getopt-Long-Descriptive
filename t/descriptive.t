@@ -30,7 +30,38 @@ sub is_opt {
   }; 
   if ($@) {
     chomp($@);
-    is($@, "", "$desc: $@");
+    if (ref($expect) eq 'Regexp') {
+      like($@, $expect, $desc);
+    } else {
+      # auto-fail
+      is($@, "", "$desc: $@");
+    }
+  }
+}
+
+sub is_hidden {
+  my ($specs, $cmd, $text) = @_;
+  eval {
+    local @ARGV;
+    my ($opt, $usage) = describe_options(
+      "test %o",
+      @$specs,
+    );
+    like(
+      $usage->text,
+      $cmd,
+      "hidden option in usage command",
+    );
+    unlike(
+      $usage->text,
+      $text,
+      "hidden option description",
+    );
+  };
+  if ($@) {
+    chomp($@);
+    is($@, "", "hidden: $@");
+    ok(0);
   }
 }
 
@@ -39,4 +70,58 @@ is_opt(
   [ [ "foo-bar=i", "foo integer", { default => 17 } ] ],
   { foo_bar => 17 },
   "default foo_bar with no short option name",
+);
+
+# test hidden
+
+is_hidden(
+  [
+    [ "foo|f", "a foo option" ],
+    [ "bar|b", "a bar option", { hidden => 1 } ],
+  ],
+  qr/test \[-f\] \[long options\.\.\.\]/i,
+  qr/a bar option/,
+);
+
+### tests for one_of
+
+my $foobar = [ 
+  [ 'foo' => 'a foo option' ],
+  [ 'bar' => 'a bar option' ],
+];
+
+is_opt(
+  [ ],
+  [ 
+    [ 
+      mode => $foobar, { default => 'foo' },
+    ],
+  ],
+  { mode => 'foo' },
+  "basic usage, with default",
+);
+
+is_opt(
+  [ '--bar' ],
+  [
+    [
+      mode => $foobar,
+    ],
+  ],
+  { bar => 1, mode => 'bar' },
+  "basic usage, passed-in",
+);
+
+# implicit hidden syntax
+is_hidden(
+  [ [ mode => [] ] ],
+  qr/test\s*\n/i,
+  qr/mode/,
+);
+
+is_opt(
+  [ '--foo', '--bar' ],
+  [ [ mode => $foobar ] ],
+  #qr/\Qonly one 'mode' option (foo, bar)\E/,
+  qr/it is 'foo' already/,
 );

@@ -3,7 +3,7 @@ package Getopt::Long::Descriptive;
 use strict;
 use Getopt::Long;
 use List::Util qw(max first);
-use Carp qw(croak);
+use Carp qw(carp croak);
 use Params::Validate qw(:all);
 
 =head1 NAME
@@ -12,11 +12,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
- 0.02
+ 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -60,6 +60,57 @@ presence of that option.
   implies => { foo => 1, bar => 2 }
 
 =head3 required
+
+  required => 1
+
+=head3 hidden
+
+  hidden => 1
+
+This option will not show up in the usage text.
+
+You can achieve this same behavior by using the string C<<
+hidden >> for the option's description.
+
+=head3 one_of
+
+  one_of => \@option_specs
+
+Useful for a group of options that are related.  Each option
+spec is added to the list for normal parsing and validation.
+
+Your option name will end up with a value of the name of the
+option that was chosen.  For example, given the following spec:
+
+  [ "mode" => hidden => { one_of => [
+    [ "get|g"  => "get the value" ],
+    [ "set|s"  => "set the value" ],
+    [ "delete" => "delete it" ],
+  ] } ],
+
+No usage text for 'mode' will be displayed, though
+get/set/delete will all have descriptions.
+
+If more than one of get/set/delete (or their short versions)
+are given, an error will be thrown.
+
+If C<@ARGV> is C<--get>, a dump of the resultant option
+hashref would look like this:
+
+  { get  => 1,
+    mode => 'get' }
+
+NOTE: C<< get >> would not be set if C<< mode >> defaulted
+to 'get' and no arguments were passed in.
+
+WARNING: Even though the option sub-specs for C<< one_of >>
+are meant to be 'first class' specs, some options don't make
+sense with them, e.g. C<< required >>.
+
+As a further shorthand, you may specify C<< one_of >>
+options using this form:
+
+  [ mode => \@option_specs, \%constraints ]
 
 =head3 Params::Validate
 
@@ -143,17 +194,53 @@ my %CONSTRAINT = (
 
 our $MungeOptions = 1;
 
+sub _nohidden {
+  return grep { ! $_->{constraint}->{hidden} } @_;
+}
+
+sub _expand {
+  return map { {(
+    spec       => $_->[0],
+    desc       => $_->[1],
+    constraint => $_->[2] || {},
+    name       => _munge((split /[=|]/, $_->[0])[0]),
+  )} } @_;
+}
+    
+
 sub describe_options {
   my $format = shift;
   my $arg    = (ref $_[-1] and ref $_[-1] eq 'HASH') ? pop @_ : {};
-  my @opts   = map {
-    {(
-      spec       => $_->[0],
-      desc       => $_->[1],
-      constraint => $_->[2] || {},
-      name       => _munge((split /[=|]/, $_->[0])[0]),
-    )}
-  } @_;
+  my @opts;
+
+  # special casing
+  # wish we had real loop objects
+  for my $opt (_expand(@_)) {
+    if (ref($opt->{desc}) eq 'ARRAY') {
+      $opt->{constraint}->{one_of} = delete $opt->{desc};
+      $opt->{desc} = 'hidden';
+    }
+    if ($opt->{desc} eq 'hidden') {
+      $opt->{constraint}->{hidden}++;
+    }
+    if ($opt->{constraint}->{one_of}) {
+      for my $one_opt (_expand(
+        @{delete $opt->{constraint}->{one_of}}
+      )) {
+        $one_opt->{constraint}->{implies}
+          ->{$opt->{name}} = $one_opt->{name};
+        for my $wipe (qw(required default)) {
+          if ($one_opt->{constraint}->{$wipe}) {
+            carp "'$wipe' constraint does not make sense in sub-option";
+            delete $one_opt->{constraint}->{$wipe};
+          }
+        }
+        $one_opt->{constraint}->{one_of} = $opt->{name};
+        push @opts, $one_opt;
+      }
+    }
+    push @opts, $opt;
+  }
   
   my @go_conf = @{ $arg->{getopt_conf} || $arg->{getopt} || [] };
   if ($arg->{getopt}) {
@@ -162,7 +249,8 @@ sub describe_options {
 
   push @go_conf, "bundling" unless grep { /bundling/i } @go_conf;
    
-  my @specs = map { $_->{spec} } @opts;
+  my @specs = map { $_->{spec} } _nohidden(@opts);
+
   my $short = join "", sort {
     lc $a cmp lc $b
   } map {
@@ -185,12 +273,13 @@ sub describe_options {
 
   # a spec can grow up to 4 characters in usage output:
   # '-' on short option, ' ' between short and long, '--' on long
-  my $length = max(map length(), @specs) + 4;
+  my $length = (max(map length(), @specs) || 0) + 4;
 
+  my @showopts = _nohidden(@opts);
   my $usage = bless sub {
     my ($as_string) = @_;
     my ($out_fh, $buffer);
-    my @tmpopts = @opts;
+    my @tmpopts = @showopts;
     if ($as_string) {
       require IO::Scalar;
       $out_fh = IO::Scalar->new( \$buffer );
@@ -225,6 +314,7 @@ sub describe_options {
   }
 
   for my $copt (grep { $_->{constraint} } @opts) {
+    delete $copt->{constraint}->{hidden};
     my $name = $copt->{name};
     my $new  = _validate_with(
       name   => $name,
@@ -339,8 +429,8 @@ sub _mk_implies {
     my ($val) = shift || return 1; 
     while (my ($key, $val) = each %$what) {
       if (exists $param->{$key} and $param->{$key} ne $val) {
-        die("option specification for $name implies that $key should be set to $val, "
-              . "but it is $param->{$key} already\n");
+        die("option specification for $name implies that $key should be set to '$val', "
+              . "but it is '$param->{$key}' already\n");
       }
       $param->{$key} = $val;
     }
