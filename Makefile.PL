@@ -12,6 +12,7 @@ WriteMakefile(
         'Test::More' => 0,
         'Params::Validate' => '0.74',
         'List::Util' => 0,
+	'IO::Scalar' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Getopt-Long-Descriptive-*' },

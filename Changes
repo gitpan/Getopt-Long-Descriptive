@@ -1,5 +1,9 @@
 Revision history for Getopt-Long-Descriptive
 
+0.04    20051128 12:52:37
+
+        Include IO::Scalar prereq in Makefile.PL
+
 0.03    20051115 16:41:24
 
         Add 'one_of' and 'hidden'.
