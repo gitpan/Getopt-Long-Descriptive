@@ -12,11 +12,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
- 0.04
+ 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
@@ -203,7 +203,7 @@ sub _expand {
     spec       => $_->[0],
     desc       => $_->[1],
     constraint => $_->[2] || {},
-    name       => _munge((split /[=|]/, $_->[0])[0]),
+    name       => _munge((split /[=|!]/, $_->[0])[0]),
   )} } @_;
 }
     
@@ -254,7 +254,7 @@ sub describe_options {
   my $short = join "", sort {
     lc $a cmp lc $b
   } map {
-    (my $s = $_) =~ s/[:=]\w+$//;
+    (my $s = $_) =~ s/([:=]\w+|!)$//;
     grep /^.$/, split /\|/, $s
   } @specs;
   
@@ -293,7 +293,7 @@ sub describe_options {
       my $opt  = shift @tmpopts;
       my $spec = $opt->{spec};
       my $desc = $opt->{desc};
-      $spec =~ s/[:=]\w+[%@]?$//;
+      $spec =~ s/([:=]\w+[%@]?|!)$//;
       $spec = join " ", reverse map { length > 1 ? "--$_" : "-$_" }
                                 split /\|/, $spec;
       printf {$out_fh} "\t%-${length}s  %s\n", $spec, $desc;
@@ -426,7 +426,9 @@ sub _mk_implies {
     map { "$_=$what->{$_}" }
       keys %$what);
   return "$name implies $whatstr" => sub {
-    my ($val) = shift || return 1; 
+    my ($pv_val) = shift;
+    # negatable options will be 0 here, which is ok.
+    return 1 unless defined $pv_val;
     while (my ($key, $val) = each %$what) {
       if (exists $param->{$key} and $param->{$key} ne $val) {
         die("option specification for $name implies that $key should be set to '$val', "

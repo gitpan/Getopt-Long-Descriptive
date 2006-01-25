@@ -125,3 +125,18 @@ is_opt(
   #qr/\Qonly one 'mode' option (foo, bar)\E/,
   qr/it is 'foo' already/,
 );
+
+is_opt(
+  [ '--no-bar', '--baz' ],
+  [
+    [
+      mode => [
+        [ foo    => 'a foo option' ],
+        [ 'bar!' => 'a negatable bar option' ],
+      ],
+    ],
+    [ 'baz!' => 'a negatable baz option' ],
+  ],
+  { bar => 0, mode => 'bar', baz => 1 },
+  "negatable usage",
+);

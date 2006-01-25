@@ -1,5 +1,9 @@
 Revision history for Getopt-Long-Descriptive
 
+0.05    20060125 13:39:01
+
+        Support negatable ('foo!') options from Getopt::Long.
+
 0.04    20051128 12:52:37
 
         Include IO::Scalar prereq in Makefile.PL
