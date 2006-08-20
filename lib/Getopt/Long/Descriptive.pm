@@ -5,6 +5,7 @@ use Getopt::Long;
 use List::Util qw(max first);
 use Carp qw(carp croak);
 use Params::Validate qw(:all);
+use File::Basename ();
 
 =head1 NAME
 
@@ -12,11 +13,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
- 0.05
+ 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 DESCRIPTION
 
@@ -34,6 +35,11 @@ Convenient wrapper for Getopt::Long and program usage output
 C<%o> will be replaced with a list of the short options, as well as the text
 "[long options...]" if any have been defined.
 
+C<%c> will be replaced with what Getopt::Long::Descriptive
+thinks is the program name (see L</prog_name>).  You can
+override this guess by calling C<< prog_name($string) >>
+yourself.
+
 Because of this, any literal C<%> symbols will need to be written as C<%%>.
 
 =head1 OPTIONS
@@ -42,12 +48,25 @@ Option specifications are the same as in Getopt::Long.  You should pass in an
 array of arrayrefs whose first elements are option specs and whose second
 elements are descriptions.
 
-  my @opts = ([ "verbose|V" => "be noisy"       ],
-              [ "logfile=s" => "file to log to" ]);
+  my @opts = (
+    [ "verbose|V" => "be noisy"       ],
+    [ "logfile=s" => "file to log to" ],
+  );
 
 Option specifications may have a third hashref argument.  If
 present, this configures extra restrictions on the value or
 presence of that option.
+
+You may cause a blank line to be printed by passing an empty
+arrayref.  Likewise, a plain descriptive line will be
+printed if you pass an arrayref with a single element:
+
+  @opts = (
+    $option,
+    [],
+    [ 'other options:' ],
+    $other_option,
+  );
 
 =head2 Option Constraints
 
@@ -146,11 +165,20 @@ The usage statement has several methods:
 
 =back
 
+=head2 C<< prog_name >>
+
+A helper function that returns the basename of C<< $0 >>,
+grabbed at compile-time.
+
 =head2 C<:types>
 
 Any of the Params::Validate type constants (C<SCALAR>, etc.)
 can be imported as well.  You can get all of them at once by
 importing C<:types>.
+
+=head2 C<:all>
+
+This gets you everything.
 
 =head1 CONFIGURATION
 
@@ -176,6 +204,9 @@ L<Params::Validate>
 
 =cut
 
+my $prog_name;
+sub prog_name { @_ ? ($prog_name = shift) : $prog_name }
+
 BEGIN {
   require Exporter;
   our @ISA = qw(Exporter);
@@ -183,7 +214,15 @@ BEGIN {
   our %EXPORT_TAGS = (
     types => $Params::Validate::EXPORT_TAGS{types},
   );
-  our @EXPORT_OK = @{$EXPORT_TAGS{types}};
+  our @EXPORT_OK = (
+    @{$EXPORT_TAGS{types}},
+    @EXPORT,
+    'prog_name',
+  );
+  $EXPORT_TAGS{all} = \@EXPORT_OK;
+
+  # grab this before someone decides to change it
+  prog_name(File::Basename::basename($0));
 }
 
 my %CONSTRAINT = (
@@ -200,13 +239,16 @@ sub _nohidden {
 
 sub _expand {
   return map { {(
-    spec       => $_->[0],
-    desc       => $_->[1],
+    spec       => $_->[0] || '',
+    desc       => $_->[1] || 'spacer',
     constraint => $_->[2] || {},
-    name       => _munge((split /[=|!]/, $_->[0])[0]),
+    name       => _munge((split /[=|!]/, $_->[0] || '')[0]),
   )} } @_;
 }
     
+my %HIDDEN = (
+  hidden => 1,
+);
 
 sub describe_options {
   my $format = shift;
@@ -220,7 +262,7 @@ sub describe_options {
       $opt->{constraint}->{one_of} = delete $opt->{desc};
       $opt->{desc} = 'hidden';
     }
-    if ($opt->{desc} eq 'hidden') {
+    if ($HIDDEN{$opt->{desc}}) {
       $opt->{constraint}->{hidden}++;
     }
     if ($opt->{constraint}->{one_of}) {
@@ -249,7 +291,9 @@ sub describe_options {
 
   push @go_conf, "bundling" unless grep { /bundling/i } @go_conf;
    
-  my @specs = map { $_->{spec} } _nohidden(@opts);
+  my @specs = map { $_->{spec} } grep {
+    $_->{desc} ne 'spacer'
+  } _nohidden(@opts);
 
   my $short = join "", sort {
     lc $a cmp lc $b
@@ -266,6 +310,7 @@ sub describe_options {
                  ($short ? "[-$short]" : ()),
                  ($long  ? "[long options...]" : ())
                )),
+    "c" => prog_name,
   );
 
   (my $str = $format) =~ s/%(.)/$replace{$1}/ge;
@@ -274,6 +319,7 @@ sub describe_options {
   # a spec can grow up to 4 characters in usage output:
   # '-' on short option, ' ' between short and long, '--' on long
   my $length = (max(map length(), @specs) || 0) + 4;
+  my $spec_fmt = "\t%-${length}s";
 
   my @showopts = _nohidden(@opts);
   my $usage = bless sub {
@@ -293,10 +339,14 @@ sub describe_options {
       my $opt  = shift @tmpopts;
       my $spec = $opt->{spec};
       my $desc = $opt->{desc};
+      if ($desc eq 'spacer') {
+        printf {$out_fh} "$spec_fmt\n", $opt->{spec};
+        next;
+      }
       $spec =~ s/([:=]\w+[%@]?|!)$//;
       $spec = join " ", reverse map { length > 1 ? "--$_" : "-$_" }
                                 split /\|/, $spec;
-      printf {$out_fh} "\t%-${length}s  %s\n", $spec, $desc;
+      printf {$out_fh} "$spec_fmt  %s\n", $spec, $desc;
     }
 
     return $buffer if $as_string;
@@ -305,7 +355,7 @@ sub describe_options {
   Getopt::Long::Configure(@go_conf);
 
   my %return;
-  $usage->die unless GetOptions(\%return, @specs);
+  $usage->die unless GetOptions(\%return, grep { length } @specs);
 
   for my $opt (keys %return) {
     my $newopt = _munge($opt);
@@ -321,6 +371,7 @@ sub describe_options {
       params => \%return,
       spec   => $copt->{constraint},
       opts   => \@opts,
+      usage  => $usage,
     );
     next unless (defined($new) || exists($return{$name}));
     $return{$name} = $new;
@@ -343,6 +394,7 @@ sub _validate_with {
     params => 1,
     spec   => 1,
     opts   => 1,
+    usage  => 1,
   });
   my $spec = $arg{spec};
   my %pvspec;
@@ -387,11 +439,25 @@ sub _validate_with {
   #local $Data::Dumper::Terse = 1;
   #local $Data::Dumper::Indent = 0;
   #warn "pvspec = " . Dumper(\%pvspec);
-  my %p = validate_with(
-    params => [ %{$arg{params}} ],
-    spec   => { $arg{name} => \%pvspec },
-    allow_extra => 1,
-  );
+  my %p = eval { 
+    validate_with(
+      params => [ %{$arg{params}} ],
+      spec   => { $arg{name} => \%pvspec },
+      allow_extra => 1,
+    );
+  };
+
+  if ($@) {
+    if ($@ =~ /^Mandatory parameter '([^']+)' missing/) {
+      my $missing = $1;
+      $arg{usage}->die({
+        pre_text => "Required option missing: $1\n",
+      });
+    }
+
+    die $@;
+  }
+      
   return $p{$arg{name}};
 }
 
@@ -452,7 +518,17 @@ sub text { shift->(1) }
 
 sub warn { shift->() }
 
-sub die  { die shift->text }
+sub die  { 
+  my $self = shift;
+  my $arg  = shift || {};
+
+  die(
+    join(
+      "", 
+      grep { defined } $arg->{pre_text}, $self->text, $arg->{post_text},
+    )
+  );
+}
 
 use overload (
   q{""} => "text",

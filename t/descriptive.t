@@ -140,3 +140,31 @@ is_opt(
   { bar => 0, mode => 'bar', baz => 1 },
   "negatable usage",
 );
+
+is_opt(
+  [ ],
+  [
+    [ req => 'a required option' => {
+      required => 1
+    } ],
+  ],
+  qr/a required option/,
+  "required option -- help text"
+);
+
+{
+  local @ARGV;
+  my ($opt, $usage) = describe_options(
+    "%c %o",
+    [ foo => "a foo option" ],
+    [],
+    ['bar options:'],
+    [ bar => "a bar option" ],
+  );
+  like(
+    $usage->text,
+    qr/foo option\n\s+\n\tbar options:\n\s+--bar/,
+    "spacer and non-option description found",
+  );
+}
+
