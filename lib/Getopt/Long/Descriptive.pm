@@ -13,11 +13,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
- 0.06
+ 0.070
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.070';
 
 =head1 DESCRIPTION
 
@@ -240,7 +240,7 @@ sub _nohidden {
 sub _expand {
   return map { {(
     spec       => $_->[0] || '',
-    desc       => $_->[1] || 'spacer',
+    desc       => @$_ > 1 ? $_->[1] : 'spacer',
     constraint => $_->[2] || {},
     name       => _munge((split /[=|!]/, $_->[0] || '')[0]),
   )} } @_;
