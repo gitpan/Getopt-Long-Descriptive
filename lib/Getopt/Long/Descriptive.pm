@@ -15,11 +15,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
-Version 0.075
+Version 0.076
 
 =cut
 
-our $VERSION = '0.075';
+our $VERSION = '0.076';
 
 =head1 DESCRIPTION
 
@@ -358,7 +358,11 @@ sub describe_options {
     $return{$name} = $new;
   }
 
-  return \%return, $usage;
+  my $opt_obj = Getopt::Long::Descriptive::OptObjFactory->new_opt_obj({
+    values => \%return,
+  });
+
+  return($opt_obj, $usage);
 }
 
 sub _munge {
@@ -394,16 +398,12 @@ sub _validate_with {
     } else {
       %pvspec = (
         %pvspec,
-        $CONSTRAINT{$ct}
-          ? %{$CONSTRAINT{$ct}}
-            : ($ct => $spec->{$ct}),
+        $CONSTRAINT{$ct} ? %{$CONSTRAINT{$ct}} : ($ct => $spec->{$ct}),
       );
     }
   }
 
-  unless (exists $pvspec{optional}) {
-    $pvspec{optional} = 1;
-  }
+  $pvspec{optional} = 1 unless exists $pvspec{optional};
 
   # we need to implement 'default' by ourselves sometimes
   # because otherwise the implies won't be checked/executed
@@ -416,10 +416,6 @@ sub _validate_with {
     $arg{params}{$arg{name}} = delete $pvspec{default};
   }
 
-  #use Data::Dumper;
-  #local $Data::Dumper::Terse = 1;
-  #local $Data::Dumper::Indent = 0;
-  #warn "pvspec = " . Dumper(\%pvspec);
   my %p = eval { 
     validate_with(
       params => [ %{$arg{params}} ],
@@ -447,14 +443,11 @@ sub _validate_with {
 # hashref:  single/multiple options = given values
 sub _norm_imply {
   my ($what) = @_;
-  return $what
-    if ref $what eq 'HASH';
 
-  return { map { $_ => 1 } @$what } 
-    if ref $what eq 'ARRAY';
+  return { $what => 1 } unless my $ref = ref $what;
 
-  return { $what => 1 }
-    if not ref $what;
+  return $what                      if $ref eq 'HASH';
+  return { map { $_ => 1 } @$what } if $ref eq 'ARRAY';
 
   die "can't imply: $what";
 }
@@ -464,31 +457,69 @@ sub _mk_implies {
   my $what = _norm_imply(shift);
   my $param = shift;
   my $opts  = shift;
+
   for my $implied (keys %$what) {
-    first { $_->{name} eq $implied } @$opts
-      or die("option specification for $name implies nonexistent option $implied\n");
+    die("option specification for $name implies nonexistent option $implied\n")
+      unless first { $_->{name} eq $implied } @$opts
   }
-  my $whatstr = join(
-    ", ", 
-    map { "$_=$what->{$_}" }
-      keys %$what);
+
+  my $whatstr = join(q{, }, map { "$_=$what->{$_}" } keys %$what);
+
   return "$name implies $whatstr" => sub {
     my ($pv_val) = shift;
+
     # negatable options will be 0 here, which is ok.
     return 1 unless defined $pv_val;
+
     while (my ($key, $val) = each %$what) {
       if (exists $param->{$key} and $param->{$key} ne $val) {
-        die("option specification for $name implies that $key should be set to '$val', "
-              . "but it is '$param->{$key}' already\n");
+        die(
+          "option specification for $name implies that $key should be "
+          . "set to '$val', but it is '$param->{$key}' already\n"
+        );
       }
       $param->{$key} = $val;
     }
+
     return 1;
   };
 }
 
 sub _mk_only_one {
   die "unimplemented";
+}
+
+{
+  # Clever line break to avoid indexing! -- rjbs, 2009-08-20
+  package
+    Getopt::Long::Descriptive::OptObjFactory;
+
+  my $VERSION = '0.076';
+
+  use Carp ();
+
+  my $i = 1;
+
+  sub new_opt_obj {
+    my ($inv_class, $arg) = @_;
+    
+    my %given = %{ $arg->{values} };
+
+    my @bad = grep { $_ !~ /^[a-z_]\w+/ } keys %given;
+    Carp::confess "perverse option names given: @bad" if @bad;
+
+    my $class = "$inv_class\::_::" . $i++;
+
+    {
+      no strict 'refs';
+      ${"$class\::VERSION"} = $inv_class->VERSION;
+      for my $opt (keys %given) {
+        *{"$class\::$opt"} = sub { $_[0]->{ $opt } };
+      }
+    }
+
+    bless \%given => $class;
+  }
 }
 
 =head1 AUTHOR
