@@ -2,10 +2,12 @@ package Getopt::Long::Descriptive;
 
 use strict;
 use Getopt::Long;
-use List::Util qw(max first);
+use List::Util qw(first);
 use Carp qw(carp croak);
 use Params::Validate qw(:all);
 use File::Basename ();
+
+use Getopt::Long::Descriptive::Usage;
 
 =head1 NAME
 
@@ -13,11 +15,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
-Version 0.074
+Version 0.075
 
 =cut
 
-our $VERSION = '0.074';
+our $VERSION = '0.075';
 
 =head1 DESCRIPTION
 
@@ -208,22 +210,20 @@ my $prog_name;
 sub prog_name { @_ ? ($prog_name = shift) : $prog_name }
 
 BEGIN {
-  require Exporter;
-  our @ISA = qw(Exporter);
-  our @EXPORT = qw(describe_options);
-  our %EXPORT_TAGS = (
-    types => $Params::Validate::EXPORT_TAGS{types},
-  );
-  our @EXPORT_OK = (
-    @{$EXPORT_TAGS{types}},
-    @EXPORT,
-    'prog_name',
-  );
-  $EXPORT_TAGS{all} = \@EXPORT_OK;
-
   # grab this before someone decides to change it
   prog_name(File::Basename::basename($0));
 }
+
+use Sub::Exporter -setup => {
+  exports => [
+    qw(describe_options prog_name),
+    @{ $Params::Validate::EXPORT_TAGS{types} }
+  ],
+  groups  => [
+    default => [ qw(describe_options) ],
+    types   => $Params::Validate::EXPORT_TAGS{types},
+  ],
+};
 
 my %CONSTRAINT = (
   implies  => \&_mk_implies,
@@ -249,6 +249,15 @@ sub _expand {
 my %HIDDEN = (
   hidden => 1,
 );
+
+my $SPEC_RE = qr{(?:[:=][\d\w\+]+[%@]?({\d*,\d*})?|[!+])$};
+sub _strip_assignment {
+  my ($self, $str) = @_;
+
+  (my $copy = $str) =~ s{$SPEC_RE}{};
+
+  return $copy;
+}
 
 sub describe_options {
   my $format = shift;
@@ -290,19 +299,18 @@ sub describe_options {
   }
 
   push @go_conf, "bundling" unless grep { /bundling/i } @go_conf;
-   
+
+  # not entirely sure that all of this (until the Usage->new) shouldn't be
+  # moved into Usage -- rjbs, 2009-08-19
   my @specs = map { $_->{spec} } grep {
     $_->{desc} ne 'spacer'
   } _nohidden(@opts);
-
-
-  my $spec_assignment = '(?:[:=][\d\w\+]+[%@]?({\d*,\d*})?|[!+])$';
 
   my $short = join "", sort {
     lc $a cmp lc $b 
     or $a cmp $b
   } map {
-    (my $s = $_) =~ s/$spec_assignment//;
+    my $s = __PACKAGE__->_strip_assignment($_);
     grep /^.$/, split /\|/, $s
   } @specs;
   
@@ -320,41 +328,10 @@ sub describe_options {
   (my $str = $format) =~ s/%(.)/$replace{$1}/ge;
   $str =~ s/\s{2,}/ /g;
 
-  # a spec can grow up to 4 characters in usage output:
-  # '-' on short option, ' ' between short and long, '--' on long
-  my $length = (max(map length(), @specs) || 0) + 4;
-  my $spec_fmt = "\t%-${length}s";
-
-  my @showopts = _nohidden(@opts);
-  my $usage = bless sub {
-    my ($as_string) = @_;
-    my ($out_fh, $buffer);
-    my @tmpopts = @showopts;
-    if ($as_string) {
-      require IO::Scalar;
-      $out_fh = IO::Scalar->new( \$buffer );
-    } else {
-      $out_fh = \*STDERR;
-    }
-
-    print {$out_fh} "$str\n";
-
-    while (@tmpopts) {
-      my $opt  = shift @tmpopts;
-      my $spec = $opt->{spec};
-      my $desc = $opt->{desc};
-      if ($desc eq 'spacer') {
-        printf {$out_fh} "$spec_fmt\n", $opt->{spec};
-        next;
-      }
-      $spec =~ s/$spec_assignment//;
-      $spec = join " ", reverse map { length > 1 ? "--$_" : "-$_" }
-                                split /\|/, $spec;
-      printf {$out_fh} "$spec_fmt  %s\n", $spec, $desc;
-    }
-
-    return $buffer if $as_string;
-  } => "Getopt::Long::Descriptive::Usage";
+  my $usage = Getopt::Long::Descriptive::Usage->new({
+    options     => [ _nohidden(@opts) ],
+    leader_text => $str,
+  });
 
   Getopt::Long::Configure(@go_conf);
 
@@ -513,30 +490,6 @@ sub _mk_implies {
 sub _mk_only_one {
   die "unimplemented";
 }
-
-package Getopt::Long::Descriptive::Usage;
-
-use strict;
-
-sub text { shift->(1) }
-
-sub warn { shift->() }
-
-sub die  { 
-  my $self = shift;
-  my $arg  = shift || {};
-
-  die(
-    join(
-      "", 
-      grep { defined } $arg->{pre_text}, $self->text, $arg->{post_text},
-    )
-  );
-}
-
-use overload (
-  q{""} => "text",
-);
 
 =head1 AUTHOR
 
