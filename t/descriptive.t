@@ -173,6 +173,7 @@ is_opt(
     "spacer and non-option description found",
   );
 
+  local $SIG{__WARN__} = sub {}; # we know that this will warn; don't care
   like(
     $usage->(1),
     qr/foo option\n\s+\n\tbar options:\n\s+--bar/,
@@ -205,9 +206,13 @@ is_opt(
   my ($opt, $usage) = describe_options(
     "%c %o",
     [ "foo", '' ],
+    [ "bar", '' ],
   );
   is( $opt->{foo}, 1, "empty-but-present description is ok" );
   is( $opt->foo,   1, "empty-but-present description is ok" );
+
+  is( $opt->{bar}, undef, "entry not given is undef (exists? no guarantee)" );
+  is( $opt->bar,   undef, "entry not given is undef (as method)");
 }
 
 {

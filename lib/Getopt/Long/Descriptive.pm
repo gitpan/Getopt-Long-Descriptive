@@ -15,11 +15,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
-Version 0.077
+Version 0.079
 
 =cut
 
-our $VERSION = '0.077';
+our $VERSION = '0.079';
 
 =head1 DESCRIPTION
 
@@ -135,11 +135,10 @@ options using this form:
 
 =head3 Params::Validate
 
-In addition, any constraint understood by Params::Validate
-may be used.
+In addition, any constraint understood by Params::Validate may be used.
 
-(Internally, all constraints are translated into
-Params::Validate options or callbacks.)
+(Internally, all constraints are translated into Params::Validate options or
+callbacks.)
 
 =head1 EXTRA ARGUMENTS
 
@@ -152,10 +151,12 @@ way C<describe_options> works.  Valid arguments are:
 
 =head2 C<describe_options>
 
-See SYNOPSIS; returns a hashref of option values and an
-object that represents the usage statement.
+See SYNOPSIS; returns a hashref of option values and an object that represents
+the usage statement.  You should always import this routine, and not call it
+directly.  The ability to call C<Getopt::Long::Descriptive::describe_options>
+may go away in the future.
 
-The usage statement has several methods:
+The usage object has several methods:
 
 =over 4
 
@@ -167,18 +168,19 @@ The usage statement has several methods:
 
 =back
 
-=head2 C<< prog_name >>
+For more information on the usage object, look at
+L<Getopt::Long::Descriptive::Usage|Getopt::Long::Descriptive::Usage>.
 
-A helper function that returns the basename of C<< $0 >>,
-grabbed at compile-time.
+=head2 prog_name
 
-=head2 C<:types>
+This routine returns the basename of C<< $0 >>, grabbed at compile-time.
 
-Any of the Params::Validate type constants (C<SCALAR>, etc.)
-can be imported as well.  You can get all of them at once by
-importing C<:types>.
+=head2 -types
 
-=head2 C<:all>
+Any of the Params::Validate type constants (C<SCALAR>, etc.) can be imported as
+well.  You can get all of them at once by importing C<-types>.
+
+=head2 C<-all>
 
 This gets you everything.
 
@@ -214,9 +216,11 @@ BEGIN {
   prog_name(File::Basename::basename($0));
 }
 
+use Sub::Exporter::Util ();
 use Sub::Exporter -setup => {
   exports => [
-    qw(describe_options prog_name),
+    describe_options => \'_build_describe_options',
+    q(prog_name),
     @{ $Params::Validate::EXPORT_TAGS{types} }
   ],
   groups  => [
@@ -259,110 +263,126 @@ sub _strip_assignment {
   return $copy;
 }
 
+# This is here only to deal with people who were calling this fully-qualified
+# without importing.  Sucks to them!  -- rjbs, 2009-08-21
 sub describe_options {
-  my $format = shift;
-  my $arg    = (ref $_[-1] and ref $_[-1] eq 'HASH') ? pop @_ : {};
-  my @opts;
+  my $sub = __PACKAGE__->_build_describe_options(describe_options => {} => {});
+  $sub->();
+}
 
-  # special casing
-  # wish we had real loop objects
-  for my $opt (_expand(@_)) {
-    if (ref($opt->{desc}) eq 'ARRAY') {
-      $opt->{constraint}->{one_of} = delete $opt->{desc};
-      $opt->{desc} = 'hidden';
-    }
-    if ($HIDDEN{$opt->{desc}}) {
-      $opt->{constraint}->{hidden}++;
-    }
-    if ($opt->{constraint}->{one_of}) {
-      for my $one_opt (_expand(
-        @{delete $opt->{constraint}->{one_of}}
-      )) {
-        $one_opt->{constraint}->{implies}
-          ->{$opt->{name}} = $one_opt->{name};
-        for my $wipe (qw(required default)) {
-          if ($one_opt->{constraint}->{$wipe}) {
-            carp "'$wipe' constraint does not make sense in sub-option";
-            delete $one_opt->{constraint}->{$wipe};
-          }
-        }
-        $one_opt->{constraint}->{one_of} = $opt->{name};
-        push @opts, $one_opt;
+sub usage_class { 'Getopt::Long::Descriptive::Usage' }
+
+sub _build_describe_options {
+  my ($class) = @_;
+
+  sub {
+    my $format = shift;
+    my $arg    = (ref $_[-1] and ref $_[-1] eq 'HASH') ? pop @_ : {};
+    my @opts;
+
+    # special casing
+    # wish we had real loop objects
+    my %method_map;
+    for my $opt (_expand(@_)) {
+      $method_map{ $opt->{name} } = undef unless $opt->{desc} eq 'spacer';
+ 
+      if (ref($opt->{desc}) eq 'ARRAY') {
+        $opt->{constraint}->{one_of} = delete $opt->{desc};
+        $opt->{desc} = 'hidden';
       }
+      if ($HIDDEN{$opt->{desc}}) {
+        $opt->{constraint}->{hidden}++;
+      }
+      if ($opt->{constraint}->{one_of}) {
+        for my $one_opt (_expand(
+          @{delete $opt->{constraint}->{one_of}}
+        )) {
+          $one_opt->{constraint}->{implies}
+            ->{$opt->{name}} = $one_opt->{name};
+          for my $wipe (qw(required default)) {
+            if ($one_opt->{constraint}->{$wipe}) {
+              carp "'$wipe' constraint does not make sense in sub-option";
+              delete $one_opt->{constraint}->{$wipe};
+            }
+          }
+          $one_opt->{constraint}->{one_of} = $opt->{name};
+          push @opts, $one_opt;
+        }
+      }
+      push @opts, $opt;
     }
-    push @opts, $opt;
-  }
-  
-  my @go_conf = @{ $arg->{getopt_conf} || $arg->{getopt} || [] };
-  if ($arg->{getopt}) {
-    warn "describe_options: 'getopt' is deprecated, please use 'getopt_conf' instead\n";
-  }
+    
+    my @go_conf = @{ $arg->{getopt_conf} || $arg->{getopt} || [] };
+    if ($arg->{getopt}) {
+      warn "describe_options: 'getopt' is deprecated, please use 'getopt_conf' instead\n";
+    }
 
-  push @go_conf, "bundling" unless grep { /bundling/i } @go_conf;
+    push @go_conf, "bundling" unless grep { /bundling/i } @go_conf;
 
-  # not entirely sure that all of this (until the Usage->new) shouldn't be
-  # moved into Usage -- rjbs, 2009-08-19
-  my @specs = map { $_->{spec} } grep {
-    $_->{desc} ne 'spacer'
-  } _nohidden(@opts);
+    # not entirely sure that all of this (until the Usage->new) shouldn't be
+    # moved into Usage -- rjbs, 2009-08-19
+    my @specs =
+      map  { $_->{spec} }
+      grep { $_->{desc} ne 'spacer' }
+      _nohidden(@opts);
 
-  my $short = join "", sort {
-    lc $a cmp lc $b 
-    or $a cmp $b
-  } map {
-    my $s = __PACKAGE__->_strip_assignment($_);
-    grep /^.$/, split /\|/, $s
-  } @specs;
-  
-  my $long = grep /\b[^|]{2,}/, @specs;
+    my $short = join q{},
+      sort  { lc $a cmp lc $b or $a cmp $b }
+      grep  { /^.$/ }
+      map   { split /\|/ }
+      map   { __PACKAGE__->_strip_assignment($_) }
+      @specs;
+    
+    my $long = grep /\b[^|]{2,}/, @specs;
 
-  my %replace = (
-    "%" => "%",
-    "o" => (join(" ",
-                 ($short ? "[-$short]" : ()),
-                 ($long  ? "[long options...]" : ())
-               )),
-    "c" => prog_name,
-  );
-
-  (my $str = $format) =~ s/%(.)/$replace{$1}/ge;
-  $str =~ s/\s{2,}/ /g;
-
-  my $usage = Getopt::Long::Descriptive::Usage->new({
-    options     => [ _nohidden(@opts) ],
-    leader_text => $str,
-  });
-
-  Getopt::Long::Configure(@go_conf);
-
-  my %return;
-  $usage->die unless GetOptions(\%return, grep { length } @specs);
-
-  for my $opt (keys %return) {
-    my $newopt = _munge($opt);
-    next if $newopt eq $opt;
-    $return{$newopt} = delete $return{$opt};
-  }
-
-  for my $copt (grep { $_->{constraint} } @opts) {
-    delete $copt->{constraint}->{hidden};
-    my $name = $copt->{name};
-    my $new  = _validate_with(
-      name   => $name,
-      params => \%return,
-      spec   => $copt->{constraint},
-      opts   => \@opts,
-      usage  => $usage,
+    my %replace = (
+      "%" => "%",
+      "c" => prog_name,
+      "o" => join(q{ },
+        ($short ? "[-$short]" : ()),
+        ($long  ? "[long options...]" : ())
+      ),
     );
-    next unless (defined($new) || exists($return{$name}));
-    $return{$name} = $new;
+
+    (my $str = $format) =~ s/%(.)/$replace{$1}/ge;
+    $str =~ s/\s{2,}/ /g;
+
+    my $usage = $class->usage_class->new({
+      options     => [ _nohidden(@opts) ],
+      leader_text => $str,
+    });
+
+    Getopt::Long::Configure(@go_conf);
+
+    my %return;
+    $usage->die unless GetOptions(\%return, grep { length } @specs);
+
+    for my $opt (keys %return) {
+      my $newopt = _munge($opt);
+      next if $newopt eq $opt;
+      $return{$newopt} = delete $return{$opt};
+    }
+
+    for my $copt (grep { $_->{constraint} } @opts) {
+      delete $copt->{constraint}->{hidden};
+      my $name = $copt->{name};
+      my $new  = _validate_with(
+        name   => $name,
+        params => \%return,
+        spec   => $copt->{constraint},
+        opts   => \@opts,
+        usage  => $usage,
+      );
+      next unless (defined($new) || exists($return{$name}));
+      $return{$name} = $new;
+    }
+
+    my $opt_obj = $class->_new_opt_obj({
+      values => { %method_map, %return },
+    });
+
+    return($opt_obj, $usage);
   }
-
-  my $opt_obj = Getopt::Long::Descriptive::OptObjFactory->new_opt_obj({
-    values => \%return,
-  });
-
-  return($opt_obj, $usage);
 }
 
 sub _munge {
@@ -489,38 +509,50 @@ sub _mk_only_one {
   die "unimplemented";
 }
 
-{
-  # Clever line break to avoid indexing! -- rjbs, 2009-08-20
-  package
-    Getopt::Long::Descriptive::OptObjFactory;
+my $OPT_CLASS_COUNTER = 1;
 
-  my $VERSION = '0.077';
+sub _class_for_opt {
+  my ($gld_class, $arg) = @_;
 
-  use Carp ();
+  my $values = $arg->{values};
+  my @bad = grep { $_ !~ /^[a-z_]\w*$/ } keys %$values;
+  Carp::confess "perverse option names given: @bad" if @bad;
 
-  my $i = 1;
+  my $class = "$gld_class\::__OPT__::" . $OPT_CLASS_COUNTER++;
 
-  sub new_opt_obj {
-    my ($inv_class, $arg) = @_;
-    
-    my %given = %{ $arg->{values} };
-
-    my @bad = grep { $_ !~ /^[a-z_]\w*/ } keys %given;
-    Carp::confess "perverse option names given: @bad" if @bad;
-
-    my $class = "$inv_class\::_::" . $i++;
-
-    {
-      no strict 'refs';
-      ${"$class\::VERSION"} = $inv_class->VERSION;
-      for my $opt (keys %given) {
-        *{"$class\::$opt"} = sub { $_[0]->{ $opt } };
-      }
+  {
+    no strict 'refs';
+    ${"$class\::VERSION"} = $gld_class->VERSION;
+    for my $opt (keys %$values) {
+      *{"$class\::$opt"} = sub { $_[0]->{ $opt } };
     }
-
-    bless \%given => $class;
   }
+
+  return $class;
 }
+
+sub _new_opt_obj {
+  my ($gld_class, $arg) = @_;
+  
+  my $class = $gld_class->_class_for_opt($arg);
+  bless { %{ $arg->{values} } } => $class;
+}
+
+=head1 CUSTOMIZING
+
+Getopt::Long::Descriptive uses L<Sub::Exporter|Sub::Exporter> to build and
+export the C<describe_options> routine.  By writing a new class that extends
+Getopt::Long::Descriptive, the behavior of the constructed C<describe_options>
+routine can be changed.
+
+The following methods can be overridden:
+
+=head2 usage_class
+
+  my $class = Getopt::Long::Descriptive->usage_class;
+
+This returns the class to be used for constructing a Usage object, and defaults
+to Getopt::Long::Descriptive::Usage.
 
 =head1 AUTHOR
 
