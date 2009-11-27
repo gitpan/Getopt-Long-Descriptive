@@ -15,11 +15,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
-Version 0.079
+Version 0.080
 
 =cut
 
-our $VERSION = '0.079';
+our $VERSION = '0.080';
 
 =head1 DESCRIPTION
 
@@ -246,7 +246,7 @@ sub _expand {
     spec       => $_->[0] || '',
     desc       => @$_ > 1 ? $_->[1] : 'spacer',
     constraint => $_->[2] || {},
-    name       => _munge((split /[:=|!]/, $_->[0] || '')[0]),
+    name       => _munge((split /[:=|!+]/, $_->[0] || '')[0]),
   )} } @_;
 }
     
@@ -267,7 +267,7 @@ sub _strip_assignment {
 # without importing.  Sucks to them!  -- rjbs, 2009-08-21
 sub describe_options {
   my $sub = __PACKAGE__->_build_describe_options(describe_options => {} => {});
-  $sub->();
+  $sub->(@_);
 }
 
 sub usage_class { 'Getopt::Long::Descriptive::Usage' }
