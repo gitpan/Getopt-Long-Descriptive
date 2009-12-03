@@ -1,7 +1,7 @@
 package Getopt::Long::Descriptive;
 
 use strict;
-use Getopt::Long;
+use Getopt::Long 2.33;
 use List::Util qw(first);
 use Carp qw(carp croak);
 use Params::Validate qw(:all);
@@ -15,11 +15,11 @@ Getopt::Long::Descriptive - Getopt::Long with usage text
 
 =head1 VERSION
 
-Version 0.081
+Version 0.082
 
 =cut
 
-our $VERSION = '0.081';
+our $VERSION = '0.082';
 
 =head1 DESCRIPTION
 

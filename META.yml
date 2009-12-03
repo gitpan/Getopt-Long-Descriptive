@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Getopt-Long-Descriptive
-version:            0.081
+version:            0.082
 abstract:           Getopt::Long with usage text
 author:
     - Hans Dieter Pearcey <hdp@cpan.org>
@@ -11,6 +11,7 @@ configure_requires:
 build_requires:
     ExtUtils::MakeMaker:  0
 requires:
+    Getopt::Long:      2.33
     List::Util:        0
     Params::Validate:  0.74
     Sub::Exporter:     0
