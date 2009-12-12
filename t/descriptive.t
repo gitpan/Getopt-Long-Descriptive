@@ -1,9 +1,8 @@
 #!perl
-
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 37;
 
 use_ok("Getopt::Long::Descriptive");
 
@@ -199,6 +198,31 @@ is_opt(
     qr/\[-bhiloSs\]/,
     "short options",
   );
+}
+
+{
+  local @ARGV = qw(--foo FOO --baz BAZ);
+  my ($c_opt, $usage) = describe_options(
+    "%c %o",
+    [ "foo=s", '' ],
+    [ "bar=s", '', { default => 'BAR' } ],
+    [ "baz=s", '', { default => 'BAZ' } ],
+  );
+
+  my $s_opt = $c_opt->_specified_opts;
+  my $C_opt = $s_opt->_complete_opts;
+
+  is($c_opt->foo, 'FOO', 'c_opt->foo is FOO');
+  is($C_opt->foo, 'FOO', 'C_opt->foo is FOO');
+  is($s_opt->foo, 'FOO', 's_opt->foo is FOO');
+
+  is($c_opt->bar, 'BAR', 'c_opt->foo is BAR');
+  is($C_opt->bar, 'BAR', 'C_opt->foo is BAR');
+  is($s_opt->bar, undef, 's_opt->foo is undef');
+
+  is($c_opt->baz, 'BAZ', 'c_opt->foo is BAZ');
+  is($C_opt->baz, 'BAZ', 'C_opt->foo is BAZ');
+  is($s_opt->baz, 'BAZ', 's_opt->foo is BAZ');
 }
 
 {
