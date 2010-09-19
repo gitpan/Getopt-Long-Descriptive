@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 package Getopt::Long::Descriptive;
 
 use Carp qw(carp croak);
@@ -17,11 +18,11 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-Version 0.085
+Version 0.086
 
 =cut
 
-our $VERSION = '0.085';
+our $VERSION = '0.086';
 
 =head1 SYNOPSIS
 
@@ -62,8 +63,8 @@ features.
 
 =head1 FUNCTIONS
 
-Getopt::Long::Descriptive only exports one routine, and exports it by default.
-It is exported with L<Sub::Exporter>.
+Getopt::Long::Descriptive only exports one routine by default:
+C<describe_options>.  All GLD's exports are exported by L<Sub::Exporter>.
 
 =head2 describe_options
 
@@ -83,7 +84,7 @@ which provides a C<text> method to get the text of the usage message and C<die>
 to die with it.  For more methods and options, consults the documentation for
 the Usage class.
 
-=head3 usage_desc
+=head3 $usage_desc
 
 The C<$usage_desc> parameter to C<describe_options> is a C<sprintf>-like string
 that is used in generating the first line of the usage message.  It's a
@@ -104,7 +105,7 @@ expected to follow the program's options, and is entirely free-form.
 Literal C<%> characters will need to be written as C<%%>, just like with
 C<sprintf>.
 
-=head3 opt_spec
+=head3 @opt_spec
 
 The C<@opt_spec> part of the args to C<describe_options> is used to configure
 option parsing and to produce the usage message.  Each entry in the list is an
@@ -220,7 +221,7 @@ callbacks.)
 
 =back
 
-=head3 arg
+=head3 %arg
 
 The C<%arg> to C<describe_options> is optional.  If the last parameter is a
 hashref, it contains extra arguments to modify the way C<describe_options>
@@ -256,7 +257,7 @@ BEGIN {
 }
 
 use Sub::Exporter::Util ();
-use Sub::Exporter -setup => {
+use Sub::Exporter 0.972 -setup => {
   exports => [
     describe_options => \'_build_describe_options',
     q(prog_name),
@@ -285,7 +286,9 @@ sub _expand {
     spec       => $_->[0] || '',
     desc       => @$_ > 1 ? $_->[1] : 'spacer',
     constraint => $_->[2] || {},
-    name       => _munge((split /[:=|!+]/, $_->[0] || '')[0]),
+
+    # if @$_ is 0 then we got [], a spacer
+    name       => @$_ ? _munge((split /[:=|!+]/, $_->[0] || '')[0]) : '',
   )} } @_;
 }
     
