@@ -1,48 +1,13 @@
 use strict;
 use warnings;
 package Getopt::Long::Descriptive::Opts;
+BEGIN {
+  $Getopt::Long::Descriptive::Opts::VERSION = '0.090';
+}
+# ABSTRACT: object representing command line switches
 
 use Scalar::Util qw(blessed weaken);
 
-=head1 NAME
-
-Getopt::Long::Descriptive::Opts - object representing command line switches
-
-=head1 VERSION
-
-Version 0.089
-
-=cut
-
-our $VERSION = '0.089';
-
-=head1 DESCRIPTION
-
-This class is the base class of all C<$opt> objects returned by
-L<Getopt::Long::Descriptive>.  In general, you do not want to think about this
-class, look at it, or alter it.  Seriously, it's pretty dumb.
-
-Every call to C<describe_options> will return a object of a new subclass of
-this class.  It will have a method for the canonical name of each option
-possible given the option specifications.
-
-Method names beginning with an single underscore are public, and are named that
-way to avoid conflict with automatically generated methods.  Methods with
-multiple underscores (in case you're reading the source) are private.
-
-=head1 METHODS
-
-B<Achtung!>  All methods beginning with an underscore are experimental as of
-today, 2009-12-12.  They are likely to be formally made permanent soon.
-
-=head2 _specified
-
-This method returns true if the given name was specified on the command line.
-
-For example, if C<@ARGS> was "C<< --foo --bar 10 >>" and C<baz> is defined by a
-default, C<_specified> will return true for foo and bar, and false for baz.
-
-=cut
 
 my %_CREATED_OPTS;
 my $SERIAL_NUMBER = 1;
@@ -53,12 +18,6 @@ sub _specified {
   return $meta->{given}{ $name };
 }
 
-=head2 _specified_opts
-
-This method returns an opt object in which only explicitly specified values are
-defined.  Values which were set by defaults will appear undef.
-
-=cut
 
 sub _specified_opts {
   my ($self) = @_;
@@ -73,7 +32,7 @@ sub _specified_opts {
   my %opts;
   @opts{ @keys } = @$self{ @keys };
 
-  $meta->{specified_opts} = \%opts; 
+  $meta->{specified_opts} = \%opts;
 
   bless $meta->{specified_opts} => $class;
   weaken $meta->{specified_opts};
@@ -81,12 +40,6 @@ sub _specified_opts {
   $meta->{specified_opts};
 }
 
-=head2 _complete_opts
-
-This method returns the opts object with all values, including those set by
-defaults.  It is probably not going to be very often-used.
-
-=cut
 
 sub _complete_opts {
   my ($self) = @_;
@@ -120,7 +73,7 @@ sub ___class_for_opt {
 
 sub ___new_opt_obj {
   my ($class, $arg) = @_;
-  
+
   my $copy = { %{ $arg->{values} } };
 
   my $new_class = $class->___class_for_opt($arg);
@@ -142,25 +95,75 @@ sub ___new_opt_obj {
   return $self;
 }
 
-=head1 AUTHOR
+1;
 
-Hans Dieter Pearcey, C<< <hdp@cpan.org> >>
+__END__
+=pod
 
-=head1 BUGS
+=head1 NAME
 
-Please report any bugs or feature requests to
-C<bug-getopt-long-descriptive@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Getopt-Long-Descriptive>.
-I will be notified, and then you'll automatically be notified of progress on
-your bug as I make changes.
+Getopt::Long::Descriptive::Opts - object representing command line switches
 
-=head1 COPYRIGHT & LICENSE
+=head1 VERSION
 
-Copyright 2005 Hans Dieter Pearcey, all rights reserved.
+version 0.090
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+=head1 DESCRIPTION
+
+This class is the base class of all C<$opt> objects returned by
+L<Getopt::Long::Descriptive>.  In general, you do not want to think about this
+class, look at it, or alter it.  Seriously, it's pretty dumb.
+
+Every call to C<describe_options> will return a object of a new subclass of
+this class.  It will have a method for the canonical name of each option
+possible given the option specifications.
+
+Method names beginning with an single underscore are public, and are named that
+way to avoid conflict with automatically generated methods.  Methods with
+multiple underscores (in case you're reading the source) are private.
+
+=head1 METHODS
+
+B<Achtung!>  All methods beginning with an underscore are experimental as of
+today, 2009-12-12.  They are likely to be formally made permanent soon.
+
+=head2 _specified
+
+This method returns true if the given name was specified on the command line.
+
+For example, if C<@ARGS> was "C<< --foo --bar 10 >>" and C<baz> is defined by a
+default, C<_specified> will return true for foo and bar, and false for baz.
+
+=head2 _specified_opts
+
+This method returns an opt object in which only explicitly specified values are
+defined.  Values which were set by defaults will appear undef.
+
+=head2 _complete_opts
+
+This method returns the opts object with all values, including those set by
+defaults.  It is probably not going to be very often-used.
+
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Hans Dieter Pearcey <hdp@cpan.org>
+
+=item *
+
+Ricardo Signes <rjbs@cpan.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2005 by Hans Dieter Pearcey.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
 
-1;

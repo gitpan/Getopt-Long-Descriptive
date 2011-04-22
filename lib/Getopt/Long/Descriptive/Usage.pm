@@ -1,43 +1,13 @@
-package Getopt::Long::Descriptive::Usage;
 use strict;
 use warnings;
-
-our $VERSION = '0.089';
+package Getopt::Long::Descriptive::Usage;
+BEGIN {
+  $Getopt::Long::Descriptive::Usage::VERSION = '0.090';
+}
+# ABSTRACT: the usage description for GLD
 
 use List::Util qw(max);
 
-=head1 NAME
-
-Getopt::Long::Descriptive::Usage - the usage description for GLD
-
-=head1 SYNOPSIS
-
-  use Getopt::Long::Descriptive;
-  my ($opt, $usage) = describe_options( ... );
-
-  $usage->text; # complete usage message
-
-  $usage->die;  # die with usage message
-
-=head1 DESCRIPTION
-
-This document only describes the methods of the Usage object.  For information
-on how to use L<Getopt::Long::Descriptive>, consult its documentation.
-
-=head1 METHODS
-
-=head2 new
-
-  my $usage = Getopt::Long::Descriptive::Usage->new(\%arg);
-
-You B<really> don't need to call this.  GLD will do it for you.
-
-Valid arguments are:
-
-  options     - an arrayref of options
-  leader_text - the text that leads the usage; this may go away!
-
-=cut
 
 sub new {
   my ($class, $arg) = @_;
@@ -50,11 +20,6 @@ sub new {
   bless \%copy => $class;
 }
 
-=head2 text
-
-This returns the full text of the usage message.
-
-=cut
 
 sub text {
   my ($self) = @_;
@@ -62,19 +27,9 @@ sub text {
   return join qq{\n}, $self->leader_text, $self->option_text;
 }
 
-=head2 leader_text
-
-This returns the text that comes at the beginning of the usage message.
-
-=cut
 
 sub leader_text { $_[0]->{leader_text} }
 
-=head2 option_text
-
-This returns the text describing the available options.
-
-=cut
 
 sub option_text {
   my ($self) = @_;
@@ -134,31 +89,11 @@ sub _split_description {
   return @lines;
 }
 
-=head2 warn
-
-This warns with the usage message.
-
-=cut
 
 sub warn { warn shift->text }
 
-=head2 die
 
-This throws the usage message as an exception.
-
-  $usage_obj->die(\%arg);
-
-Some arguments can be provided 
-
-  pre_text  - text to be prepended to the usage message
-  post_text - text to be appended to the usage message
-
-The C<pre_text> and C<post_text> arguments are concatenated with the usage
-message with no line breaks, so supply this if you need them.
-
-=cut
-
-sub die  { 
+sub die  {
   my $self = shift;
   my $arg  = shift || {};
 
@@ -179,24 +114,96 @@ use overload (
   }
 );
 
-=head1 AUTHOR
+1;
 
-Hans Dieter Pearcey, C<< <hdp@cpan.org> >>
+__END__
+=pod
 
-=head1 BUGS
+=head1 NAME
 
-Please report any bugs or feature requests through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Getopt-Long-Descriptive>.  I
-will be notified, and then you'll automatically be notified of progress on your
-bug as I make changes.
+Getopt::Long::Descriptive::Usage - the usage description for GLD
 
-=head1 COPYRIGHT & LICENSE
+=head1 VERSION
 
-Copyright 2005 Hans Dieter Pearcey, all rights reserved.
+version 0.090
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+=head1 SYNOPSIS
+
+  use Getopt::Long::Descriptive;
+  my ($opt, $usage) = describe_options( ... );
+
+  $usage->text; # complete usage message
+
+  $usage->die;  # die with usage message
+
+=head1 DESCRIPTION
+
+This document only describes the methods of the Usage object.  For information
+on how to use L<Getopt::Long::Descriptive>, consult its documentation.
+
+=head1 METHODS
+
+=head2 new
+
+  my $usage = Getopt::Long::Descriptive::Usage->new(\%arg);
+
+You B<really> don't need to call this.  GLD will do it for you.
+
+Valid arguments are:
+
+  options     - an arrayref of options
+  leader_text - the text that leads the usage; this may go away!
+
+=head2 text
+
+This returns the full text of the usage message.
+
+=head2 leader_text
+
+This returns the text that comes at the beginning of the usage message.
+
+=head2 option_text
+
+This returns the text describing the available options.
+
+=head2 warn
+
+This warns with the usage message.
+
+=head2 die
+
+This throws the usage message as an exception.
+
+  $usage_obj->die(\%arg);
+
+Some arguments can be provided 
+
+  pre_text  - text to be prepended to the usage message
+  post_text - text to be appended to the usage message
+
+The C<pre_text> and C<post_text> arguments are concatenated with the usage
+message with no line breaks, so supply this if you need them.
+
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Hans Dieter Pearcey <hdp@cpan.org>
+
+=item *
+
+Ricardo Signes <rjbs@cpan.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2005 by Hans Dieter Pearcey.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
 
-1;

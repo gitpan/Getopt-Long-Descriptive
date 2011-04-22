@@ -1,12 +1,14 @@
 Changes
+LICENSE
+MANIFEST
+META.json
+META.yml
+Makefile.PL
+README
+dist.ini
 lib/Getopt/Long/Descriptive.pm
 lib/Getopt/Long/Descriptive/Opts.pm
 lib/Getopt/Long/Descriptive/Usage.pm
-Makefile.PL
-MANIFEST
-README
 t/00-load.t
 t/descriptive.t
-t/pod-coverage.t
-t/pod.t
-META.yml                                 Module meta-data (added by MakeMaker)
+t/release-pod-syntax.t
