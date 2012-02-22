@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 package Getopt::Long::Descriptive;
-BEGIN {
-  $Getopt::Long::Descriptive::VERSION = '0.090';
+{
+  $Getopt::Long::Descriptive::VERSION = '0.091';
 }
 # ABSTRACT: Getopt::Long, but simpler and more powerful
 
@@ -250,20 +250,27 @@ sub _validate_with {
     $arg{params}{$arg{name}} = delete $pvspec{default};
   }
 
-  my %p = eval {
-    validate_with(
+  my %p;
+  my $ok = eval {
+    %p = validate_with(
       params => [ %{$arg{params}} ],
       spec   => { $arg{name} => \%pvspec },
       allow_extra => 1,
+      on_fail     => sub {
+        my $fail_msg = shift;
+        Getopt::Long::Descriptive::_PV_Error->throw($fail_msg);
+      },
     );
+    1;
   };
 
-  if ($@) {
-    if ($@ =~ /^Mandatory parameter '([^']+)' missing/) {
-      my $missing = $1;
-      $arg{usage}->die({
-        pre_text => "Required option missing: $1\n",
-      });
+  if (! $ok) {
+    my $error = $@;
+    if (
+      Scalar::Util::blessed($error)
+      && $error->isa('Getopt::Long::Descriptive::_PV_Error')
+    ) {
+      $arg{usage}->die({ pre_text => $error->error . "\n" });
     }
 
     die $@;
@@ -323,6 +330,18 @@ sub _mk_only_one {
   die "unimplemented";
 }
 
+{
+  package
+    Getopt::Long::Descriptive::_PV_Error;
+  sub error { $_[0]->{error} }
+  sub throw {
+    my ($class, $error_msg) = @_;
+    my $self = { error => $error_msg };
+    bless $self, $class;
+    die $self;
+  }
+}
+
 
 1; # End of Getopt::Long::Descriptive
 
@@ -335,7 +354,7 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-version 0.090
+version 0.091
 
 =head1 SYNOPSIS
 
@@ -361,7 +380,7 @@ version 0.090
   my-program [-psv] [long options...] <some-arg>
     -s --server     the server to connect to
     -p --port       the port to connect to
-                  
+
     -v --verbose    print extra stuff
     --help          print usage message and exit
 

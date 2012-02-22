@@ -4,37 +4,39 @@ use warnings;
 
 
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Getopt::Long, but simpler and more powerful',
-  'AUTHOR' => 'Hans Dieter Pearcey <hdp@cpan.org>, Ricardo Signes <rjbs@cpan.org>',
-  'BUILD_REQUIRES' => {
-    'Test::More' => '0.96'
+  "ABSTRACT" => "Getopt::Long, but simpler and more powerful",
+  "AUTHOR" => "Hans Dieter Pearcey <hdp\@cpan.org>, Ricardo Signes <rjbs\@cpan.org>",
+  "BUILD_REQUIRES" => {
+    "Test::More" => "0.96"
   },
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'Getopt-Long-Descriptive',
-  'EXE_FILES' => [],
-  'LICENSE' => 'perl',
-  'NAME' => 'Getopt::Long::Descriptive',
-  'PREREQ_PM' => {
-    'Carp' => '0',
-    'File::Basename' => '0',
-    'Getopt::Long' => '2.33',
-    'List::Util' => '0',
-    'Params::Validate' => '0.97',
-    'Scalar::Util' => '0',
-    'Sub::Exporter' => '0.972',
-    'Sub::Exporter::Util' => '0',
-    'overload' => '0'
+  "DISTNAME" => "Getopt-Long-Descriptive",
+  "EXE_FILES" => [],
+  "LICENSE" => "perl",
+  "NAME" => "Getopt::Long::Descriptive",
+  "PREREQ_PM" => {
+    "Carp" => 0,
+    "File::Basename" => 0,
+    "Getopt::Long" => "2.33",
+    "List::Util" => 0,
+    "Params::Validate" => "0.97",
+    "Scalar::Util" => 0,
+    "Sub::Exporter" => "0.972",
+    "Sub::Exporter::Util" => 0,
+    "overload" => 0,
+    "strict" => 0,
+    "warnings" => 0
   },
-  'VERSION' => '0.090',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "0.091",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 
