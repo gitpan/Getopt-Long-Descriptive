@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive::Usage;
 {
-  $Getopt::Long::Descriptive::Usage::VERSION = '0.091';
+  $Getopt::Long::Descriptive::Usage::VERSION = '0.092';
 }
 # ABSTRACT: the usage description for GLD
 
@@ -125,7 +125,7 @@ Getopt::Long::Descriptive::Usage - the usage description for GLD
 
 =head1 VERSION
 
-version 0.091
+version 0.092
 
 =head1 SYNOPSIS
 

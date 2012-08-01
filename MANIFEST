@@ -9,6 +9,9 @@ dist.ini
 lib/Getopt/Long/Descriptive.pm
 lib/Getopt/Long/Descriptive/Opts.pm
 lib/Getopt/Long/Descriptive/Usage.pm
+t/00-compile.t
 t/00-load.t
+t/000-report-versions-tiny.t
 t/descriptive.t
-t/release-pod-syntax.t
+xt/release/changes_has_content.t
+xt/release/pod-syntax.t

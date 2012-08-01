@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive;
 {
-  $Getopt::Long::Descriptive::VERSION = '0.091';
+  $Getopt::Long::Descriptive::VERSION = '0.092';
 }
 # ABSTRACT: Getopt::Long, but simpler and more powerful
 
@@ -133,6 +133,13 @@ sub _build_describe_options {
 
     # not entirely sure that all of this (until the Usage->new) shouldn't be
     # moved into Usage -- rjbs, 2009-08-19
+
+    # all specs including hidden
+    my @getopt_specs =
+      map  { $_->{spec} }
+      grep { $_->{desc} ne 'spacer' }
+      @opts;
+
     my @specs =
       map  { $_->{spec} }
       grep { $_->{desc} ne 'spacer' }
@@ -167,7 +174,7 @@ sub _build_describe_options {
     Getopt::Long::Configure(@go_conf);
 
     my %return;
-    $usage->die unless GetOptions(\%return, grep { length } @specs);
+    $usage->die unless GetOptions(\%return, grep { length } @getopt_specs);
     my @given_keys = keys %return;
 
     for my $opt (keys %return) {
@@ -354,7 +361,7 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-version 0.091
+version 0.092
 
 =head1 SYNOPSIS
 
