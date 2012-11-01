@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive::Opts;
 {
-  $Getopt::Long::Descriptive::Opts::VERSION = '0.092';
+  $Getopt::Long::Descriptive::Opts::VERSION = '0.093';
 }
 # ABSTRACT: object representing command line switches
 
@@ -98,6 +98,7 @@ sub ___new_opt_obj {
 1;
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -106,7 +107,7 @@ Getopt::Long::Descriptive::Opts - object representing command line switches
 
 =head1 VERSION
 
-version 0.092
+version 0.093
 
 =head1 DESCRIPTION
 
@@ -166,4 +167,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

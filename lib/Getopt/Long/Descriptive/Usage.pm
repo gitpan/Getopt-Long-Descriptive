@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive::Usage;
 {
-  $Getopt::Long::Descriptive::Usage::VERSION = '0.092';
+  $Getopt::Long::Descriptive::Usage::VERSION = '0.093';
 }
 # ABSTRACT: the usage description for GLD
 
@@ -117,6 +117,7 @@ use overload (
 1;
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -125,7 +126,7 @@ Getopt::Long::Descriptive::Usage - the usage description for GLD
 
 =head1 VERSION
 
-version 0.092
+version 0.093
 
 =head1 SYNOPSIS
 
@@ -206,4 +207,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

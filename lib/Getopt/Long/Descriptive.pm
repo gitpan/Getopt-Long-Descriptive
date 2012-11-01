@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive;
 {
-  $Getopt::Long::Descriptive::VERSION = '0.092';
+  $Getopt::Long::Descriptive::VERSION = '0.093';
 }
 # ABSTRACT: Getopt::Long, but simpler and more powerful
 
@@ -163,7 +163,12 @@ sub _build_describe_options {
       ),
     );
 
-    (my $str = $format) =~ s/%(.)/$replace{$1}/ge;
+    (my $str = $format) =~ s<%(.)><
+      defined $replace{$1}
+      ? $replace{$1}
+      : Carp::croak("unknown sequence %$1 in first argument to describe_options")
+    >ge;
+
     $str =~ s/\s{2,}/ /g;
 
     my $usage = $class->usage_class->new({
@@ -353,6 +358,7 @@ sub _mk_only_one {
 1; # End of Getopt::Long::Descriptive
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -361,7 +367,7 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-version 0.092
+version 0.093
 
 =head1 SYNOPSIS
 
@@ -637,4 +643,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
