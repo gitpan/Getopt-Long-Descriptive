@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive::Opts;
 {
-  $Getopt::Long::Descriptive::Opts::VERSION = '0.093';
+  $Getopt::Long::Descriptive::Opts::VERSION = '0.094';
 }
 # ABSTRACT: object representing command line switches
 
@@ -107,7 +107,7 @@ Getopt::Long::Descriptive::Opts - object representing command line switches
 
 =head1 VERSION
 
-version 0.093
+version 0.094
 
 =head1 DESCRIPTION
 
