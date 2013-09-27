@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive;
 {
-  $Getopt::Long::Descriptive::VERSION = '0.094';
+  $Getopt::Long::Descriptive::VERSION = '0.095';
 }
 # ABSTRACT: Getopt::Long, but simpler and more powerful
 
@@ -120,7 +120,13 @@ sub _build_describe_options {
           push @opts, $one_opt;
         }
       }
+      if ($opt->{constraint}{shortcircuit}
+        && exists $opt->{constraint}{default}
+      ) {
+        carp('option "' . $opt->{name} . q[": 'default' does not make sense for shortcircuit options]);
+      }
       push @opts, $opt;
+
     }
 
     my @go_conf = @{ $arg->{getopt_conf} || $arg->{getopt} || [] };
@@ -188,8 +194,14 @@ sub _build_describe_options {
       $return{$newopt} = delete $return{$opt};
     }
 
-    for my $copt (grep { $_->{constraint} } @opts) {
+    # ensure that shortcircuit options are handled first
+    for my $copt (
+      sort {     ($b->{constraint}{shortcircuit} || 0)
+             <=> ($a->{constraint}{shortcircuit} || 0)
+           } grep { $_->{constraint} } @opts
+    ) {
       delete $copt->{constraint}->{hidden};
+      my $is_shortcircuit = delete $copt->{constraint}{shortcircuit};
       my $name = $copt->{name};
       my $new  = _validate_with(
         name   => $name,
@@ -200,6 +212,11 @@ sub _build_describe_options {
       );
       next unless (defined($new) || exists($return{$name}));
       $return{$name} = $new;
+
+      if ($is_shortcircuit) {
+        %return = ($name => $return{$name});
+        last;
+      }
     }
 
     my $opt_obj = Getopt::Long::Descriptive::Opts->___new_opt_obj({
@@ -367,7 +384,7 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-version 0.094
+version 0.095
 
 =head1 SYNOPSIS
 
@@ -558,6 +575,14 @@ class' specs, some options don't make sense with them, e.g. C<required>.
 As a further shorthand, you may specify C<one_of> options using this form:
 
   [ mode => \@option_specs, \%constraints ]
+
+=item shortcircuit
+
+  shortcircuit => 1
+
+If this option is present no other options will be returned.  Other
+options present will be checked for proper types, but I<not> for
+constraints.  This provides a way of specifying C<--help> style options.
 
 =item Params::Validate
 
