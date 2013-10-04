@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Getopt::Long::Descriptive;
 {
-  $Getopt::Long::Descriptive::VERSION = '0.095';
+  $Getopt::Long::Descriptive::VERSION = '0.096';
 }
 # ABSTRACT: Getopt::Long, but simpler and more powerful
 
@@ -384,7 +384,7 @@ Getopt::Long::Descriptive - Getopt::Long, but simpler and more powerful
 
 =head1 VERSION
 
-version 0.095
+version 0.096
 
 =head1 SYNOPSIS
 

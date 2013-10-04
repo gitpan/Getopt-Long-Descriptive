@@ -1,5 +1,9 @@
 Revision history for Getopt-Long-Descriptive
 
+0.096     2013-10-04 08:03:12 America/New_York
+        - update version of Test::Warnings required
+          (thanks, Alexandr Ciornii!)
+
 0.095     2013-09-26 20:32:55 America/New_York
         - add the "shortcircuit" option option (thanks, Diab Jerius!)
 

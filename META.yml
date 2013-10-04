@@ -9,11 +9,11 @@ build_requires:
   IPC::Open3: 0
   Test::Fatal: 0
   Test::More: 0.96
-  Test::Warnings: 0
+  Test::Warnings: 0.005
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132620'
+generated_by: 'Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132661'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -35,10 +35,10 @@ resources:
   bugtracker: https://github.com/rjbs/Getopt-Long-Descriptive/issues
   homepage: https://github.com/rjbs/Getopt-Long-Descriptive
   repository: https://github.com/rjbs/Getopt-Long-Descriptive.git
-version: 0.095
+version: 0.096
 x_Dist_Zilla:
   perl:
-    version: 5.019003
+    version: 5.019004
   plugins:
     -
       class: Dist::Zilla::Plugin::Git::GatherDir
@@ -55,11 +55,11 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::PromptIfStale
       name: '@RJBS/RJBS-Outdated'
-      version: 0.006
+      version: 0.007
     -
       class: Dist::Zilla::Plugin::PromptIfStale
       name: '@RJBS/CPAN-Outdated'
-      version: 0.006
+      version: 0.007
     -
       class: Dist::Zilla::Plugin::PruneCruft
       name: '@RJBS/@Filter/PruneCruft'
@@ -143,7 +143,7 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::ReportVersions::Tiny
       name: '@RJBS/ReportVersions::Tiny'
-      version: 1.09
+      version: 1.10
     -
       class: Dist::Zilla::Plugin::Test::Compile
       config:
@@ -175,7 +175,7 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::GithubMeta
       name: '@RJBS/GithubMeta'
-      version: 0.38
+      version: 0.42
     -
       class: Dist::Zilla::Plugin::Git::Check
       name: '@RJBS/@Git/Check'

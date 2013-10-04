@@ -5,7 +5,7 @@
       "Ricardo Signes <rjbs@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132620",
+   "generated_by" : "Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132661",
    "license" : [
       "perl_5"
    ],
@@ -48,7 +48,7 @@
             "IPC::Open3" : "0",
             "Test::Fatal" : "0",
             "Test::More" : "0.96",
-            "Test::Warnings" : "0"
+            "Test::Warnings" : "0.005"
          }
       }
    },
@@ -64,10 +64,10 @@
          "web" : "https://github.com/rjbs/Getopt-Long-Descriptive"
       }
    },
-   "version" : "0.095",
+   "version" : "0.096",
    "x_Dist_Zilla" : {
       "perl" : {
-         "version" : "5.019003"
+         "version" : "5.019004"
       },
       "plugins" : [
          {
@@ -88,12 +88,12 @@
          {
             "class" : "Dist::Zilla::Plugin::PromptIfStale",
             "name" : "@RJBS/RJBS-Outdated",
-            "version" : "0.006"
+            "version" : "0.007"
          },
          {
             "class" : "Dist::Zilla::Plugin::PromptIfStale",
             "name" : "@RJBS/CPAN-Outdated",
-            "version" : "0.006"
+            "version" : "0.007"
          },
          {
             "class" : "Dist::Zilla::Plugin::PruneCruft",
@@ -198,7 +198,7 @@
          {
             "class" : "Dist::Zilla::Plugin::ReportVersions::Tiny",
             "name" : "@RJBS/ReportVersions::Tiny",
-            "version" : "1.09"
+            "version" : "1.10"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::Compile",
@@ -243,7 +243,7 @@
          {
             "class" : "Dist::Zilla::Plugin::GithubMeta",
             "name" : "@RJBS/GithubMeta",
-            "version" : "0.38"
+            "version" : "0.42"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Check",
