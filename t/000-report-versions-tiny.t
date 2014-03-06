@@ -51,10 +51,7 @@ sub pmver {
 eval { $v .= pmver('Carp','any version') };
 eval { $v .= pmver('ExtUtils::MakeMaker','6.30') };
 eval { $v .= pmver('File::Basename','any version') };
-eval { $v .= pmver('File::Spec','any version') };
 eval { $v .= pmver('Getopt::Long','2.33') };
-eval { $v .= pmver('IO::Handle','any version') };
-eval { $v .= pmver('IPC::Open3','any version') };
 eval { $v .= pmver('List::Util','any version') };
 eval { $v .= pmver('Params::Validate','0.97') };
 eval { $v .= pmver('Scalar::Util','any version') };

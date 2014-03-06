@@ -1,5 +1,9 @@
 Revision history for Getopt-Long-Descriptive
 
+0.097     2014-03-05 21:57:32-05:00 America/New_York
+        - explicitly make the default behavior case-sensitive
+        - add show_defaults option (thanks, Thomas Neumann)
+
 0.096     2013-10-04 08:03:12 America/New_York
         - update version of Test::Warnings required
           (thanks, Alexandr Ciornii!)
